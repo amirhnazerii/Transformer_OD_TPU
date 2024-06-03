@@ -5,8 +5,8 @@ from transformers import DetrModel, DetrConfig, DetrForObjectDetection
 model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50")
 
 # Input image dimensions
-input_height = 224
-input_width = 224
+input_height = 260
+input_width = 260
 
 # output dimensions after a convolutional layer
 def conv_output_dim(input_size, kernel_size, stride, padding=0, dilation=1):
