@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 
 RUN apt-get update -qq && \
     apt-get install -y git vim libgtk2.0-dev && \
