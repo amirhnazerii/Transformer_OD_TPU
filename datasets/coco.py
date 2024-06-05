@@ -57,7 +57,7 @@ class CocoDetection(torch.utils.data.Dataset):
 
         with rasterio.open(os.path.join(self.img_folder, path)) as src:
             band = src.read()
-            img = np.repeat(band,3,axis=0).transpose(1,2,0)
+            img = np.repeat(band,3,axis=0).transpose(1,2,0).astype('float32')
 
         target = {'image_id': img_id, 'annotations': target}
         img, target = self.prepare(img, target)
