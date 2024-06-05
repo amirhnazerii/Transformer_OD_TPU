@@ -6,6 +6,12 @@ Mostly copy-paste from https://github.com/pytorch/vision/blob/13b35ff/references
 """
 from pathlib import Path
 
+import rasterio
+import os
+import numpy as np
+from PIL import Image
+
+
 import torch
 import torch.utils.data
 import torchvision
@@ -14,20 +20,73 @@ from pycocotools import mask as coco_mask
 import datasets.transforms as T
 
 
-class CocoDetection(torchvision.datasets.CocoDetection):
+# class CocoDetection(torchvision.datasets.CocoDetection):
+#     def __init__(self, img_folder, ann_file, transforms, return_masks):
+#         super(CocoDetection, self).__init__(img_folder, ann_file)
+#         self._transforms = transforms
+#         self.prepare = ConvertCocoPolysToMask(return_masks)
+
+#     def __getitem__(self, idx):
+#         img, target = super(CocoDetection, self).__getitem__(idx)
+#         print(img)
+#         image_id = self.ids[idx]
+#         target = {'image_id': image_id, 'annotations': target}
+#         img, target = self.prepare(img, target)
+#         print(img)
+#         if self._transforms is not None:
+#             img, target = self._transforms(img, target)
+#         return img, target
+
+class CocoDetection(torch.utils.data.Dataset):
+    """`MS Coco Captions <http://mscoco.org/dataset/#detections-challenge2016>`_ Dataset.
+
+    Args:
+        root (string): Root directory where images are downloaded to.
+        annFile (string): Path to json annotation file.
+        transform (callable, optional): A function/transform that  takes in an PIL image
+            and returns a transformed version. E.g, ``transforms.ToTensor``
+        target_transform (callable, optional): A function/transform that takes in the
+            target and transforms it.
+    """
+
     def __init__(self, img_folder, ann_file, transforms, return_masks):
-        super(CocoDetection, self).__init__(img_folder, ann_file)
+        from pycocotools.coco import COCO
+        self.img_folder = img_folder
+        self.coco = COCO(ann_file)
+        self.ids = list(self.coco.imgs.keys())
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
 
+
     def __getitem__(self, idx):
-        img, target = super(CocoDetection, self).__getitem__(idx)
+        """
+        Args:
+            index (int): Index
+
+        Returns:
+            tuple: Tuple (image, target). target is the object returned by ``coco.loadAnns``.
+        """
+        coco = self.coco
+        img_id = self.ids[idx]
+        ann_ids = coco.getAnnIds(imgIds=img_id)
+        target = coco.loadAnns(ann_ids)
+
+        path = coco.loadImgs(img_id)[0]['file_name']
+
+        with rasterio.open(os.path.join(self.img_folder, path)) as src:
+            band = src.read()
+            img = np.repeat(band,3,axis=0).transpose(1,2,0)
+
+        print(img.shape)
         image_id = self.ids[idx]
         target = {'image_id': image_id, 'annotations': target}
         img, target = self.prepare(img, target)
         if self._transforms is not None:
             img, target = self._transforms(img, target)
         return img, target
+
+    def __len__(self):
+        return len(self.ids)
 
 
 def convert_coco_poly_to_mask(segmentations, height, width):
@@ -52,7 +111,7 @@ class ConvertCocoPolysToMask(object):
         self.return_masks = return_masks
 
     def __call__(self, image, target):
-        w, h = image.size
+        w, h = image.shape[1], image.shape[2]
 
         image_id = target["image_id"]
         image_id = torch.tensor([image_id])
@@ -123,6 +182,7 @@ def make_coco_transforms(image_set):
 
     if image_set == 'train':
         return T.Compose([
+            normalize,
             T.RandomHorizontalFlip(),
             # T.RandomSelect(
             #     T.RandomResize(scales, max_size=1333),
@@ -132,13 +192,12 @@ def make_coco_transforms(image_set):
             #         T.RandomResize(scales, max_size=1333),
             #     ])
             # ),
-            normalize,
         ])
 
     if image_set == 'val':
         return T.Compose([
-            # T.RandomResize([800], max_size=1333),
             normalize,
+            # T.RandomResize([800], max_size=1333),
         ])
 
     raise ValueError(f'unknown {image_set}')
