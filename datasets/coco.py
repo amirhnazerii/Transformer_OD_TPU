@@ -19,24 +19,6 @@ from pycocotools import mask as coco_mask
 
 import datasets.transforms as T
 
-
-# class CocoDetection(torchvision.datasets.CocoDetection):
-#     def __init__(self, img_folder, ann_file, transforms, return_masks):
-#         super(CocoDetection, self).__init__(img_folder, ann_file)
-#         self._transforms = transforms
-#         self.prepare = ConvertCocoPolysToMask(return_masks)
-
-#     def __getitem__(self, idx):
-#         img, target = super(CocoDetection, self).__getitem__(idx)
-#         print(img)
-#         image_id = self.ids[idx]
-#         target = {'image_id': image_id, 'annotations': target}
-#         img, target = self.prepare(img, target)
-#         print(img)
-#         if self._transforms is not None:
-#             img, target = self._transforms(img, target)
-#         return img, target
-
 class CocoDetection(torch.utils.data.Dataset):
     """`MS Coco Captions <http://mscoco.org/dataset/#detections-challenge2016>`_ Dataset.
 
@@ -77,7 +59,6 @@ class CocoDetection(torch.utils.data.Dataset):
             band = src.read()
             img = np.repeat(band,3,axis=0).transpose(1,2,0)
 
-        print(img.shape)
         image_id = self.ids[idx]
         target = {'image_id': image_id, 'annotations': target}
         img, target = self.prepare(img, target)
