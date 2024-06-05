@@ -59,7 +59,7 @@ def crop(image, target, region):
 def hflip(image, target):
     flipped_image = F.hflip(image)
 
-    w, h = image.size
+    w, h = image.shape[0], image.shape[1]
 
     target = target.copy()
     if "boxes" in target:
