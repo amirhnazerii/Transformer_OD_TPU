@@ -24,8 +24,11 @@ class CocoEvaluator(object):
         assert isinstance(iou_types, (list, tuple))
         coco_gt = copy.deepcopy(coco_gt)
         self.coco_gt = coco_gt
-
         self.iou_types = iou_types
+
+        print(self.coco_gt)
+        print(self.iou_types)
+        
         self.coco_eval = {}
         for iou_type in iou_types:
             self.coco_eval[iou_type] = COCOeval(coco_gt, iouType=iou_type)
@@ -39,7 +42,6 @@ class CocoEvaluator(object):
 
         for iou_type in self.iou_types:
             results = self.prepare(predictions, iou_type)
-
             # suppress pycocotools prints
             with open(os.devnull, 'w') as devnull:
                 with contextlib.redirect_stdout(devnull):

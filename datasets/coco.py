@@ -35,10 +35,10 @@ class CocoDetection(torch.utils.data.Dataset):
         from pycocotools.coco import COCO
         self.img_folder = img_folder
         self.coco = COCO(ann_file)
-        self.ids = list(self.coco.imgs.keys())
+        self.ids = list(sorted(self.coco.imgs.keys()))
+                        
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
-
 
     def __getitem__(self, idx):
         """
@@ -50,7 +50,7 @@ class CocoDetection(torch.utils.data.Dataset):
         """
         coco = self.coco
         img_id = self.ids[idx]
-        ann_ids = coco.getAnnIds(imgIds=img_id)
+        ann_ids = coco.getAnnIds(img_id)
         target = coco.loadAnns(ann_ids)
 
         path = coco.loadImgs(img_id)[0]['file_name']
@@ -59,8 +59,7 @@ class CocoDetection(torch.utils.data.Dataset):
             band = src.read()
             img = np.repeat(band,3,axis=0).transpose(1,2,0)
 
-        image_id = self.ids[idx]
-        target = {'image_id': image_id, 'annotations': target}
+        target = {'image_id': img_id, 'annotations': target}
         img, target = self.prepare(img, target)
         if self._transforms is not None:
             img, target = self._transforms(img, target)
@@ -92,7 +91,7 @@ class ConvertCocoPolysToMask(object):
         self.return_masks = return_masks
 
     def __call__(self, image, target):
-        w, h = image.shape[1], image.shape[2]
+        w, h = image.shape[0], image.shape[1]
 
         image_id = target["image_id"]
         image_id = torch.tensor([image_id])
@@ -164,7 +163,7 @@ def make_coco_transforms(image_set):
     if image_set == 'train':
         return T.Compose([
             normalize,
-            T.RandomHorizontalFlip(),
+            # T.RandomHorizontalFlip(),
             # T.RandomSelect(
             #     T.RandomResize(scales, max_size=1333),
             #     T.Compose([

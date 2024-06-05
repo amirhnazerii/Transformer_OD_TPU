@@ -163,6 +163,7 @@ def main(args):
         base_ds = get_coco_api_from_dataset(coco_val)
     else:
         base_ds = get_coco_api_from_dataset(dataset_val)
+        print(base_ds)
 
     if args.frozen_weights is not None:
         checkpoint = torch.load(args.frozen_weights, map_location='cpu')

@@ -10,6 +10,6 @@ Then, after building the Docker image using the Dockerfile, run a jupyter lab se
 
 Then, the program can be run using the following command in the ```Transformer_OD_TPU``` directory:
 
-```torchrun main.py --coco_path /path/to/data --output_dir /path/to/output --num_workers 0 --batch_size 8 --resume https://dl.fbaipublicfiles.com/detr/detr-r50-e632da11.pth```
+```torchrun main.py --coco_path /workspace/processed_data --output_dir /workspace/detr_output --num_workers 0 --batch_size 8 --resume https://dl.fbaipublicfiles.com/detr/detr-r50-e632da11.pth```
 
 This will run the script with default parameters, loading in pretrained object detection weights.
