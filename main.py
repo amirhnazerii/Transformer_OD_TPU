@@ -192,6 +192,7 @@ def main(args):
 
     print("Start training")
     start_time = time.time()
+    best_val_loss = 200
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             sampler_train.set_epoch(epoch)
@@ -217,14 +218,29 @@ def main(args):
             model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
         )
 
-        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+        log_stats = {#**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
                      'epoch': epoch,
                      'n_parameters': n_parameters}
 
+        if best_val_loss > log_stats['test_loss']:
+            best_val_loss = log_stats['test_loss']
+            if args.output_dir:
+                checkpoint_paths = [output_dir / 'best_checkpoint.pth']
+                
+                for checkpoint_path in checkpoint_paths:
+                    utils.save_on_master({
+                        'model': model_without_ddp.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'lr_scheduler': lr_scheduler.state_dict(),
+                        'epoch': epoch,
+                        'args': args,
+                    }, checkpoint_path)
+
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")
+
 
             # for evaluation logs
             if coco_evaluator is not None:
