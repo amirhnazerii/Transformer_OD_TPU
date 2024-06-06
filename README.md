@@ -20,4 +20,4 @@ This will run the script with default parameters, loading in pretrained object d
 
 To train from scratch, a binary DETR model can be built by passing ```num_workers 2``` as an argument, e.g.
 
-```torchrun main.py --coco_path /workspace/processed_data --output_dir /workspace/detr_output --num_workers 0 --batch_size 8 --num_classes 2```
+```torchrun main.py --coco_path /workspace/processed_data --output_dir /workspace/detr_output_scratch --num_workers 0 --batch_size 8 --num_classes 2```
