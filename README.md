@@ -2,9 +2,13 @@
 Exploration of TPU Architectures for Optimized Transformer Performance in Image Detection of Drainage Crossings
 
 ## Running the Model in Docker
-Ensure that the data folder and Transformer_OD_TPU repository are in the same work directory.
+Ensure that the data folder and Transformer_OD_TPU repository are in the same work directory, ```/path/to/work/directory/```.
 
-Then, after building the Docker image using the Dockerfile, run a jupyter lab server using:
+Navigate to the ```Transformer_OD_TPU``` repository and build the docker image by running:
+
+```docker build -t transformer_od_tpu .```
+
+Then, after building the Docker image, run a jupyter lab server using:
 
 ```docker run --gpus all -it -v /path/to/work/directory:/workspace/ -p 8888:8888 transformer_od_tpu```
 
