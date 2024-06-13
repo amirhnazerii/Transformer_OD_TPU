@@ -58,18 +58,17 @@ def crop(image, target, region):
 
 def hflip(image, target):
     flipped_image = F.hflip(image)
-
-    w, h = image.shape[0], image.shape[1]
+    print(image.shape, target)
 
     target = target.copy()
     if "boxes" in target:
         boxes = target["boxes"]
-        boxes = boxes[:, [2, 1, 0, 3]] * torch.as_tensor([-1, 1, -1, 1]) + torch.as_tensor([w, 0, w, 0])
+        boxes[:,0] = (1-(boxes[:,0]))
         target["boxes"] = boxes
-
+    
     if "masks" in target:
         target['masks'] = target['masks'].flip(-1)
-
+    print (target)
     return flipped_image, target
 
 
