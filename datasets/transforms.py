@@ -23,7 +23,7 @@ def crop(image, target, region):
     target["size"] = torch.tensor([h, w])
 
     fields = ["labels", "area", "iscrowd"]
-
+    
     if "boxes" in target:
         boxes = target["boxes"]
         max_size = torch.as_tensor([w, h], dtype=torch.float32)
@@ -49,7 +49,7 @@ def crop(image, target, region):
             keep = torch.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], dim=1)
         else:
             keep = target['masks'].flatten(1).any(1)
-
+    
         for field in fields:
             target[field] = target[field][keep]
 
@@ -58,17 +58,18 @@ def crop(image, target, region):
 
 def hflip(image, target):
     flipped_image = F.hflip(image)
-    print(image.shape, target)
+
+    w, h = image.shape[0], image.shape[1]
 
     target = target.copy()
     if "boxes" in target:
         boxes = target["boxes"]
-        boxes[:,0] = (1-(boxes[:,0]))
+        boxes = boxes[:, [2, 1, 0, 3]] * torch.as_tensor([-1, 1, -1, 1]) + torch.as_tensor([w, 0, w, 0])
         target["boxes"] = boxes
-    
+
     if "masks" in target:
         target['masks'] = target['masks'].flip(-1)
-    print (target)
+
     return flipped_image, target
 
 
@@ -170,7 +171,7 @@ class CenterCrop(object):
         self.size = size
 
     def __call__(self, img, target):
-        image_width, image_height = img.size
+        w, h = image.shape[0], image.shape[1]
         crop_height, crop_width = self.size
         crop_top = int(round((image_height - crop_height) / 2.))
         crop_left = int(round((image_width - crop_width) / 2.))
