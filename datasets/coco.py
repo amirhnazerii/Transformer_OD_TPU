@@ -18,6 +18,7 @@ import torchvision
 from pycocotools import mask as coco_mask
 
 import datasets.transforms as T
+from util.box_ops import get_true_centroid
 
 class CocoDetection(torch.utils.data.Dataset):
     """`MS Coco Captions <http://mscoco.org/dataset/#detections-challenge2016>`_ Dataset.
@@ -37,7 +38,7 @@ class CocoDetection(torch.utils.data.Dataset):
         self.coco = COCO(ann_file)
         self.ids = list(sorted(self.coco.imgs.keys()))
         self.box_scale = box_scale
-                        
+        
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
 
@@ -95,7 +96,7 @@ class ConvertCocoPolysToMask(object):
 
     def __call__(self, image, target, box_scale):
         w, h = image.shape[0], image.shape[1]
-
+        
         image_id = target["image_id"]
         image_id = torch.tensor([image_id])
 
@@ -111,7 +112,7 @@ class ConvertCocoPolysToMask(object):
         boxes[:, 1::2].clamp_(min=0, max=h)
         classes = [obj["category_id"] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
-
+        
         if self.return_masks:
             segmentations = [obj["segmentation"] for obj in anno]
             masks = convert_coco_poly_to_mask(segmentations, h, w)

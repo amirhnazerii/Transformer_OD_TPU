@@ -46,7 +46,9 @@ def crop(image, target, region):
         # this is compatible with previous implementation
         if "boxes" in target:
             cropped_boxes = target['boxes'].reshape(-1, 2, 2)
-            keep = torch.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], dim=1)
+            x_condition = cropped_boxes[:, 1, 0] - cropped_boxes[:, 0, 0] >= 55
+            y_condition = cropped_boxes[:, 1, 1] - cropped_boxes[:, 0, 1] >= 55
+            keep = x_condition & y_condition
         else:
             keep = target['masks'].flatten(1).any(1)
     
@@ -59,12 +61,15 @@ def crop(image, target, region):
 def hflip(image, target):
     flipped_image = F.hflip(image)
 
-    w, h = image.shape[0], image.shape[1]
+    w, h = image.shape[1], image.shape[2]
+
 
     target = target.copy()
     if "boxes" in target:
         boxes = target["boxes"]
         boxes = boxes[:, [2, 1, 0, 3]] * torch.as_tensor([-1, 1, -1, 1]) + torch.as_tensor([w, 0, w, 0])
+        #print('boxes[:, [2, 1, 0, 3]]', boxes[:, [2, 1, 0, 3]])
+        #print('torch.as_tensor([w, 0, w, 0]',torch.as_tensor([w, 0, w, 0]))
         target["boxes"] = boxes
 
     if "masks" in target:

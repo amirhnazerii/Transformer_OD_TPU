@@ -86,3 +86,28 @@ def masks_to_boxes(masks):
     y_min = y_mask.masked_fill(~(masks.bool()), 1e8).flatten(1).min(-1)[0]
 
     return torch.stack([x_min, y_min, x_max, y_max], 1)
+
+def get_true_centroid(bbox, box_size):
+    """Reconstruct the true centroid of a Drainage Crossing based on input bbox
+
+    Assumes an image size of 800x800
+
+    Returns [cx, cy]
+    """
+    xmin, ymin, xmax, ymax = bbox
+    
+    b = 0.5 * box_size
+
+    # get true centroid x coordinate
+    if xmin == 0:
+        cx = xmax - b
+    else:
+        cx = xmin + b
+
+    # get true centroid y coordinate
+    if ymin == 0:
+        cy = ymax - b
+    else:
+        cy = ymin + b
+
+    return [cx, cy]
