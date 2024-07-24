@@ -46,9 +46,10 @@ def crop(image, target, region):
         # this is compatible with previous implementation
         if "boxes" in target:
             cropped_boxes = target['boxes'].reshape(-1, 2, 2)
-            x_condition = cropped_boxes[:, 1, 0] - cropped_boxes[:, 0, 0] >= 55
-            y_condition = cropped_boxes[:, 1, 1] - cropped_boxes[:, 0, 1] >= 55
+            x_condition = cropped_boxes[:, 1, 0] - cropped_boxes[:, 0, 0] >= 50
+            y_condition = cropped_boxes[:, 1, 1] - cropped_boxes[:, 0, 1] >= 50
             keep = x_condition & y_condition
+            # keep = torch.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], dim=1)
         else:
             keep = target['masks'].flatten(1).any(1)
     

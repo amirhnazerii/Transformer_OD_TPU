@@ -32,16 +32,42 @@ class CocoDetection(torch.utils.data.Dataset):
             target and transforms it.
     """
 
-    def __init__(self, img_folder, ann_file, transforms, return_masks, box_scale):
+    def __init__(self, image_set, img_folder, ann_file, transforms, return_masks, box_scale):
         from pycocotools.coco import COCO
         self.img_folder = img_folder
         self.coco = COCO(ann_file)
-        self.ids = list(sorted(self.coco.imgs.keys()))
+        self.image_set = image_set
+
         self.box_scale = box_scale
         
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
 
+        if image_set == 'val':
+            self.ids = list(sorted(self._build_valid_ids()))
+        else:
+            self.ids = list(sorted(self.coco.imgs.keys()))
+
+    def _build_valid_ids(self):
+        valid_ids = []
+        for img_id in self.coco.imgs.keys():
+            ann_ids = self.coco.getAnnIds(img_id)
+            target = self.coco.loadAnns(ann_ids)
+            
+
+            path = self.coco.loadImgs(img_id)[0]['file_name']
+
+            with rasterio.open(os.path.join(self.img_folder, path)) as src:
+                band = src.read()
+                img = np.repeat(band,3,axis=0).transpose(1,2,0).astype('float32')
+            target = {'image_id': img_id, 'annotations': target}
+            img, target = self.prepare(img, target, self.box_scale)
+            if self._transforms is not None:
+                img, target = self._transforms(img, target)
+            if len(target['boxes']) != 0:
+                valid_ids.append(img_id)
+        return valid_ids
+        
     def __getitem__(self, idx):
         """
         Args:
@@ -53,6 +79,7 @@ class CocoDetection(torch.utils.data.Dataset):
         coco = self.coco
         img_id = self.ids[idx]
         box_scale = self.box_scale
+
         ann_ids = coco.getAnnIds(img_id)
         target = coco.loadAnns(ann_ids)
 
@@ -67,6 +94,7 @@ class CocoDetection(torch.utils.data.Dataset):
         img, target = self.prepare(img, target, box_scale)
         if self._transforms is not None:
             img, target = self._transforms(img, target)
+
         return img, target
 
     def __len__(self):
@@ -198,5 +226,5 @@ def build(image_set, args):
         "val": (root / "validate", root / "annotations" / 'validate.json'),
     }
     img_folder, ann_file = PATHS[image_set]
-    dataset = CocoDetection(img_folder, ann_file, transforms=make_coco_transforms(image_set, args.crop), return_masks=args.masks, box_scale=args.box_scale)
+    dataset = CocoDetection(image_set, img_folder, ann_file, transforms=make_coco_transforms(image_set, args.crop), return_masks=args.masks, box_scale=args.box_scale)
     return dataset
