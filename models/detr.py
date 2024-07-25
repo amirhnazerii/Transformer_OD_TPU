@@ -257,7 +257,7 @@ class SetCriterion(nn.Module):
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
     @torch.no_grad()
-    def forward(self, outputs, target_sizes):
+    def forward(self, outputs, original_sizes, augmented_sizes):
         """ Perform the computation
         Parameters:
             outputs: raw outputs of the model
@@ -267,8 +267,8 @@ class PostProcess(nn.Module):
         """
         out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
 
-        assert len(out_logits) == len(target_sizes)
-        assert target_sizes.shape[1] == 2
+        assert len(out_logits) == len(original_sizes)
+        assert original_sizes.shape[1] == 2
 
         prob = F.softmax(out_logits, -1)
         scores, labels = prob[..., :-1].max(-1)
@@ -276,9 +276,16 @@ class PostProcess(nn.Module):
         # convert to [x0, y0, x1, y1] format
         boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
         # and from relative [0, 1] to absolute [0, height] coordinates
-        img_h, img_w = target_sizes.unbind(1)
+        # this code assumes center cropping for validation
+        img_h, img_w = augmented_sizes.unbind(1)
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+
+        change_xy = (original_sizes - augmented_sizes) / 2
+        dx, dy = change_xy.unbind(1)
+        addition_fct = torch.stack([dx, dy, dx, dy], dim=1)
+
         boxes = boxes * scale_fct[:, None, :]
+        boxes = boxes + addition_fct[:, None, :]
 
         results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
 

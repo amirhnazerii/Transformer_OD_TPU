@@ -103,8 +103,9 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
                              **loss_dict_reduced_unscaled)
         metric_logger.update(class_error=loss_dict_reduced['class_error'])
 
-        orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
-        results = postprocessors['bbox'](outputs, orig_target_sizes)
+        orig_target_sizes = torch.stack([t['orig_size'] for t in targets], dim=0)
+        augmented_target_sizes = torch.stack([t['size'] for t in targets], dim=0)
+        results = postprocessors['bbox'](outputs, orig_target_sizes, augmented_target_sizes)
         if 'segm' in postprocessors.keys():
             target_sizes = torch.stack([t["size"] for t in targets], dim=0)
             results = postprocessors['segm'](results, outputs, orig_target_sizes, target_sizes)

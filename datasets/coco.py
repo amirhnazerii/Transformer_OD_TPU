@@ -32,18 +32,19 @@ class CocoDetection(torch.utils.data.Dataset):
             target and transforms it.
     """
 
-    def __init__(self, image_set, img_folder, ann_file, transforms, return_masks, box_scale):
+    def __init__(self, image_set, img_folder, ann_file, transforms, return_masks, crop):
         from pycocotools.coco import COCO
         self.img_folder = img_folder
         self.coco = COCO(ann_file)
         self.image_set = image_set
 
-        self.box_scale = box_scale
+        self.crop = crop
+        
         
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
 
-        if image_set == 'val':
+        if image_set != 'train':
             self.ids = list(sorted(self._build_valid_ids()))
         else:
             self.ids = list(sorted(self.coco.imgs.keys()))
@@ -53,21 +54,10 @@ class CocoDetection(torch.utils.data.Dataset):
         for img_id in self.coco.imgs.keys():
             ann_ids = self.coco.getAnnIds(img_id)
             target = self.coco.loadAnns(ann_ids)
-            
-
-            path = self.coco.loadImgs(img_id)[0]['file_name']
-
-            with rasterio.open(os.path.join(self.img_folder, path)) as src:
-                band = src.read()
-                img = np.repeat(band,3,axis=0).transpose(1,2,0).astype('float32')
-            target = {'image_id': img_id, 'annotations': target}
-            img, target = self.prepare(img, target, self.box_scale)
-            if self._transforms is not None:
-                img, target = self._transforms(img, target)
-            if len(target['boxes']) != 0:
+            if len(target) != 0:
                 valid_ids.append(img_id)
         return valid_ids
-        
+    
     def __getitem__(self, idx):
         """
         Args:
@@ -78,7 +68,6 @@ class CocoDetection(torch.utils.data.Dataset):
         """
         coco = self.coco
         img_id = self.ids[idx]
-        box_scale = self.box_scale
 
         ann_ids = coco.getAnnIds(img_id)
         target = coco.loadAnns(ann_ids)
@@ -91,7 +80,7 @@ class CocoDetection(torch.utils.data.Dataset):
             img = np.repeat(band,3,axis=0).transpose(1,2,0).astype('float32')
 
         target = {'image_id': img_id, 'annotations': target}
-        img, target = self.prepare(img, target, box_scale)
+        img, target = self.prepare(img, target)
         if self._transforms is not None:
             img, target = self._transforms(img, target)
 
@@ -122,7 +111,7 @@ class ConvertCocoPolysToMask(object):
     def __init__(self, return_masks=False):
         self.return_masks = return_masks
 
-    def __call__(self, image, target, box_scale):
+    def __call__(self, image, target):
         w, h = image.shape[0], image.shape[1]
         
         image_id = target["image_id"]
@@ -207,7 +196,7 @@ def make_coco_transforms(image_set, crop):
             # ),
         ])
 
-    if image_set == 'val':
+    if image_set == 'val' or image_set == 'test':
         return T.Compose([
             T.ToTensor(),
             T.CenterCrop((crop,crop)),
@@ -220,11 +209,13 @@ def make_coco_transforms(image_set, crop):
 
 def build(image_set, args):
     root = Path(args.coco_path)
+    crop = args.crop
     assert root.exists(), f'provided COCO path {root} does not exist'
     PATHS = {
-        "train": (root / "train", root / "annotations" / 'train.json'),
-        "val": (root / "validate", root / "annotations" / 'validate.json'),
+        "train": (root / "train", root / 'annotations' / f'train_{crop}.json'),
+        "val": (root / "validate", root / 'annotations' / f'validate_{crop}.json'),
+        "test": (root / "test", root / 'annotations' / f'test_{crop}.json')
     }
     img_folder, ann_file = PATHS[image_set]
-    dataset = CocoDetection(image_set, img_folder, ann_file, transforms=make_coco_transforms(image_set, args.crop), return_masks=args.masks, box_scale=args.box_scale)
+    dataset = CocoDetection(image_set, img_folder, ann_file, transforms=make_coco_transforms(image_set, crop), return_masks=args.masks, crop=args.crop)
     return dataset
