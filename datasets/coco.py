@@ -84,7 +84,9 @@ class CocoDetection(torch.utils.data.Dataset):
         if self._transforms is not None:
             img, target = self._transforms(img, target)
 
-        return img, target
+        name = torch.tensor(int(path[:-4]))
+
+        return img, target, name
 
     def __len__(self):
         return len(self.ids)
@@ -171,11 +173,11 @@ class ConvertCocoPolysToMask(object):
         return image, target
 
 
-def make_coco_transforms(image_set, crop):
+def make_coco_transforms(image_set, crop, mean, std):
 
     normalize = T.Compose([
         #T.ToTensor(),
-        T.Normalize([6.6374, 6.6374, 6.6374], [10.184, 10.184, 10.184])
+        T.Normalize([mean, mean, mean], [std, std, std])
     ])
 
     scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
@@ -210,6 +212,8 @@ def make_coco_transforms(image_set, crop):
 def build(image_set, args):
     root = Path(args.coco_path)
     crop = args.crop
+    mean = args.mean
+    std = args.std
     assert root.exists(), f'provided COCO path {root} does not exist'
     PATHS = {
         "train": (root / "train", root / 'annotations' / f'train_{crop}.json'),
@@ -217,5 +221,5 @@ def build(image_set, args):
         "test": (root / "test", root / 'annotations' / f'test_{crop}.json')
     }
     img_folder, ann_file = PATHS[image_set]
-    dataset = CocoDetection(image_set, img_folder, ann_file, transforms=make_coco_transforms(image_set, crop), return_masks=args.masks, crop=args.crop)
+    dataset = CocoDetection(image_set, img_folder, ann_file, transforms=make_coco_transforms(image_set, crop, mean, std), return_masks=args.masks, crop=args.crop)
     return dataset

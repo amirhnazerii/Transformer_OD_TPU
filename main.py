@@ -86,6 +86,8 @@ def get_args_parser():
     parser.add_argument('--remove_difficult', action='store_true')
     parser.add_argument('--box_scale', type=float, default=1, help='scaling factor for boxes')
     parser.add_argument('--crop', type=int, default=800, help='crop to this as h and w')
+    parser.add_argument('--mean', type=float, default=6.6374, help='mean for dataset normalization')
+    parser.add_argument('--std', type=float, default=10.184, help='std for dataset normalization')
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
