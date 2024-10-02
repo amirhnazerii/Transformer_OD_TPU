@@ -84,6 +84,10 @@ def get_args_parser():
     parser.add_argument('--coco_path', type=str)
     parser.add_argument('--coco_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
+    parser.add_argument('--box_scale', type=float, default=1, help='scaling factor for boxes')
+    parser.add_argument('--crop', type=int, default=800, help='crop to this as h and w')
+    parser.add_argument('--mean', type=float, default=6.6374, help='mean for dataset normalization')
+    parser.add_argument('--std', type=float, default=10.184, help='std for dataset normalization')
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
@@ -164,8 +168,7 @@ def main(args):
         base_ds = get_coco_api_from_dataset(coco_val)
     else:
         base_ds = get_coco_api_from_dataset(dataset_val)
-        print(base_ds)
-
+        
     if args.frozen_weights is not None:
         checkpoint = torch.load(args.frozen_weights, map_location='cpu')
         model_without_ddp.detr.load_state_dict(checkpoint['model'])
@@ -177,7 +180,13 @@ def main(args):
                 args.resume, map_location='cpu', check_hash=True)
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
-        model_without_ddp.load_state_dict(checkpoint['model'])
+        if args.num_classes != 91 and args.resume.startswith('https'):
+            pretrained_dict = {k: v for k, v in checkpoint['model'].items() if 'class_embed' not in k}
+            model_dict = model_without_ddp.state_dict()
+            model_dict.update(pretrained_dict)
+            model_without_ddp.load_state_dict(model_dict)
+        else:
+            model_without_ddp.load_state_dict(checkpoint['model'])
         if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
             optimizer.load_state_dict(checkpoint['optimizer'])
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
