@@ -1,8 +1,10 @@
 * csv_detr.py &rarr;
+  
   Imports DETR for Opbject Detection model from pretrained models collection of "trasformers" library.
   Then, create the .csv file with all convolutional layers' parameters, as required for ScaleSim topology.
 
 * detr.csv &rarr;
+  
   CSV file produced by csv_detr.py
 
 * dse.py &rarr;
