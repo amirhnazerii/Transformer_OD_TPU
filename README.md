@@ -2,8 +2,6 @@
 
 Exploration of TPU Architectures for Optimized Transformer Performance in Image Detection of Drainage Crossings
 
-![image](https://github.com/user-attachments/assets/26502408-11b3-4a8f-9578-5e31a16c8ac6)
-(Carion et al. 2020)
 ![image](https://github.com/user-attachments/assets/13406859-337b-4907-aece-f68805006bad)
 
 
