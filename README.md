@@ -83,8 +83,6 @@ The statistics for the transfer dataset were as follows: ```mean: 0.7294, std: 9
 
 ## Results
 - Predictions:
-%![image](https://github.com/user-attachments/assets/d726725c-ec22-4340-80f6-aa3752bdd8ea)
-
 
 ![image](https://github.com/user-attachments/assets/0e07e026-4724-40f1-9145-20564fa01c59)
 
