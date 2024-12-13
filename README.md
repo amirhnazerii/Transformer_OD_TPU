@@ -86,12 +86,11 @@ The statistics for the transfer dataset were as follows: ```mean: 0.7294, std: 9
 
 ![image](https://github.com/user-attachments/assets/0e07e026-4724-40f1-9145-20564fa01c59)
 
-Model outputs from initial test set (top) and transfer learning test set (bottom). From left to right: original image size of 800×800 is cropped to 600×600, 400×400, and 256×256. Ground truth bounding boxes are shown in green and model predictions with confidence over 0.7 are shown in red.![image](https://github.com/user-attachments/assets/419ff5a8-b054-4ba3-bf57-fa53667b5d84)
+- Model outputs from initial test set (top) and transfer learning test set (bottom). From left to right: original image size of 800×800 is cropped to 600×600, 400×400, and 256×256. Ground truth bounding boxes are shown in green and model predictions with confidence over 0.7 are shown in red.
 
 ###  Model Performance:
 
 Precision and Recall on Initial and Transfer Datasets. Average Precision = AP, Average Recall = AR
-![image](https://github.com/user-attachments/assets/410bda77-a196-4b10-bf55-8685e9f9bbe1)
 
 ![image](https://github.com/user-attachments/assets/8dcc983d-caf8-4447-bd6e-612de26a9278)
 
